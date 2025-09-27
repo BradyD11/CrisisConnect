@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { X, Calendar, MapPin, Users, Clock } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Label } from './ui/label';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Button } from './ui/button.tsx';
+import { Input } from './ui/input.tsx';
+import { Textarea } from './ui/textarea.tsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.tsx';
+import { Label } from './ui/label.tsx';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group.tsx';
 import React from 'react';
 
 

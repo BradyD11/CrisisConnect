@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Menu, X, User } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from './ui/button.tsx';
 import React from 'react';
 
 

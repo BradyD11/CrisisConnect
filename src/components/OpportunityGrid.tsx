@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { OpportunityCard, type Opportunity } from './OpportunityCard';
-import { Button } from './ui/button';
+import { OpportunityCard, type Opportunity } from './OpportunityCard.tsx';
+import { Button } from './ui/button.tsx';
 import { Filter } from 'lucide-react';
 import React from 'react';
 

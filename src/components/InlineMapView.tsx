@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { MapPin, Navigation } from 'lucide-react';
-import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Badge } from './ui/badge';
+import { Button } from './ui/button.tsx';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card.tsx';
+import { Badge } from './ui/badge.tsx';
 import { type Opportunity } from './OpportunityCard';
 import React from 'react';
 

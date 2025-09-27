@@ -7,7 +7,7 @@ import { MapView } from './components/MapView.tsx';
 import { SubmissionForm, type OpportunityFormData } from './components/SubmissionForm.tsx';
 import { Footer } from './components/Footer.tsx';
 import { toast } from 'sonner';
-import { Toaster } from './components/ui/sonner';
+import { Toaster } from './components/ui/sonner.tsx';
 import { type Opportunity } from './components/OpportunityCard';
 import React from 'react';
 
