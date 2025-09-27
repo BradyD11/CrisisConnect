@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { volunteerApi } from '../services/volunteerApi';
+import { volunteerApi } from '../services/volunteerApi.ts';
 import { VolunteerOpportunity, SearchFilters } from '../types';
 import { toast } from 'sonner';
 
