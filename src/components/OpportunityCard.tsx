@@ -1,8 +1,8 @@
 import React from 'react';
 import { MapPin, Clock, Users } from 'lucide-react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Card, CardContent, CardFooter, CardHeader } from './ui/card';
+import { Button } from './ui/button.tsx';
+import { Badge } from './ui/badge.tsx';
+import { Card, CardContent, CardFooter, CardHeader } from './ui/card.tsx';
 
 export interface Opportunity {
   id: string;

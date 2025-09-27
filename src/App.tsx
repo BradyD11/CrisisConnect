@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Header } from './components/Header';
-import { HeroSection, type SearchFilters } from './components/HeroSection';
-import { OpportunityGrid } from './components/OpportunityGrid';
-import { InlineMapView } from './components/InlineMapView';
-import { MapView } from './components/MapView';
-import { SubmissionForm, type OpportunityFormData } from './components/SubmissionForm';
-import { Footer } from './components/Footer';
+import { Header } from './components/Header.tsx';
+import { HeroSection, type SearchFilters } from './components/HeroSection.tsx';
+import { OpportunityGrid } from './components/OpportunityGrid.tsx';
+import { InlineMapView } from './components/InlineMapView.tsx';
+import { MapView } from './components/MapView.tsx';
+import { SubmissionForm, type OpportunityFormData } from './components/SubmissionForm.tsx';
+import { Footer } from './components/Footer.tsx';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner';
 import { type Opportunity } from './components/OpportunityCard';
