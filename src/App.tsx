@@ -10,14 +10,15 @@ import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner.tsx';
 import { type Opportunity } from './components/OpportunityCard';
 import { useVolunteerConnector } from './hooks/useVolunteerConnector.ts';
-import { SearchFilters as APISearchFilters } from './types';
+import { SearchFilters as APISearchFilters, VolunteerOpportunity } from './types';
 import React from 'react';
+import { GoogleMapView } from './components/map/GoogleMapView.tsx';
 
 // Transform your SearchFilters to API SearchFilters
 const transformFiltersToAPI = (filters: SearchFilters): APISearchFilters => {
   return {
-    countryCode: '64', // Default to Canada - you can make this dynamic
-    areaCode: '5',     // Default to Alberta - you can make this dynamic
+    countryCode: '1', // USA
+    // areaCode: 'AZ_CODE', // Add if you find Arizona's specific code
     keyword: filters.query,
     // Add more mappings as needed
   };
@@ -35,6 +36,19 @@ const transformAPIOpportunityToLocal = (apiOpportunity: any): Opportunity => {
     urgency: apiOpportunity.urgency,
     timeCommitment: apiOpportunity.timeCommitment,
     participantsNeeded: apiOpportunity.participantsNeeded,
+  };
+};
+
+// Transform local Opportunity to VolunteerOpportunity for components that need it
+const transformToVolunteerOpportunity = (opportunity: Opportunity): VolunteerOpportunity => {
+  const startDate = new Date();
+  const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  return {
+    ...opportunity,
+    isRemote: false, // Default to false, could be enhanced based on location data
+    categories: [opportunity.type], // Use type as category
+    dateRange: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
+    scope: 'local' // Default to local scope
   };
 };
 
@@ -124,8 +138,9 @@ export default function App() {
     hasMore,
     loadMore 
   } = useVolunteerConnector({
-    countryCode: '64', // Canada
-    areaCode: '5',     // Alberta
+    countryCode: '1',  // USA instead of Canada
+    // You might need to find the specific area code for Arizona
+    // or remove areaCode to get broader US results
   });
 
   const [filteredOpportunities, setFilteredOpportunities] = useState<Opportunity[]>([]);
@@ -276,6 +291,8 @@ export default function App() {
           />
         </div>
         
+        <InlineMapView opportunities={filteredOpportunities.map(transformToVolunteerOpportunity)} />
+        
         {/* Show load more button if there are more opportunities */}
         {hasMore && !loading && (
           <div className="container mx-auto px-4 py-8 text-center">
@@ -288,15 +305,16 @@ export default function App() {
           </div>
         )}
         
-        <InlineMapView opportunities={filteredOpportunities} />
+        <InlineMapView opportunities={filteredOpportunities.map(transformToVolunteerOpportunity)} />
       </main>
 
       <Footer />
 
       {/* Modals */}
-      <MapView
+      <GoogleMapView
         isOpen={isMapOpen}
         onClose={() => setIsMapOpen(false)}
+        opportunities={filteredOpportunities.map(transformToVolunteerOpportunity)}
       />
       
       <SubmissionForm

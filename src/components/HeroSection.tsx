@@ -5,7 +5,6 @@ import { Input } from './ui/input.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.tsx';
 import React from 'react';
 
-
 interface HeroSectionProps {
   onSearch: (filters: SearchFilters) => void;
 }
@@ -36,19 +35,23 @@ export function HeroSection({ onSearch }: HeroSectionProps) {
   };
 
   return (
-    <section className="bg-white py-16 px-4 sm:px-6 lg:px-8">
+    <section className="bg-gradient-to-br from-orange-50 to-red-50 py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl lg:text-6xl text-primary mb-6 font-['Roboto_Slab'] font-bold">
-            Find Volunteer & Donation Opportunities
+            Volunteer & Donate in Tempe
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Connect with local organizations and make a difference in your community during times of crisis and beyond.
+            Connect with Arizona State University and local Tempe organizations to make a difference in our desert community during times of crisis and beyond.
           </p>
+          <div className="mt-4 flex justify-center items-center text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4 mr-1" />
+            <span>Serving Tempe, Mesa, Chandler, and Greater Phoenix Area</span>
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 md:p-8">
+          <div className="bg-white rounded-xl shadow-lg border border-orange-100 p-6 md:p-8">
             {/* Type Toggle */}
             <div className="flex flex-wrap gap-2 mb-6 justify-center">
               <Button
