@@ -70,7 +70,7 @@ jspm_packages/
 .env.local
 .env.development.local
 .env.test.local
-.env.production.local
+.env.production
 
 # parcel-bundler cache (https://parceljs.org/)
 .parcel-cache

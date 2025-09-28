@@ -8,45 +8,73 @@ export function useVolunteerConnector(initialFilters: SearchFilters = {}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
-  const [nextPage, setNextPage] = useState<string | undefined>();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [currentFilters, setCurrentFilters] = useState<SearchFilters>(initialFilters);
+  const [isUsingMockData, setIsUsingMockData] = useState(false);
 
   const fetchOpportunities = async (filters: SearchFilters = currentFilters, append = false) => {
     setLoading(true);
     setError(null);
     
     try {
-      const result = await volunteerApi.getOpportunities(filters);
+      console.log('🔍 Fetching opportunities with filters:', filters);
+      
+      const result = await volunteerApi.getOpportunities({
+        ...filters,
+        page: append ? (currentPage + 1) : 1
+      });
+      
+      // Check if we're getting mock data by looking for specific mock IDs
+      const mockIds = ['tempe-1', 'lake-1', 'asu-1', 'senior-1'];
+      const usingMock = result.opportunities.some(opp => mockIds.includes(opp.id));
+      setIsUsingMockData(usingMock);
       
       if (append) {
         setOpportunities(prev => [...prev, ...result.opportunities]);
+        setCurrentPage(prev => prev + 1);
       } else {
         setOpportunities(result.opportunities);
+        setCurrentPage(1);
       }
       
       setTotalCount(result.totalCount);
-      setNextPage(result.nextPage);
+      setHasMore(result.hasMore);
       setCurrentFilters(filters);
       
-      toast.success(`Found ${result.opportunities.length} opportunities`);
+      // Show different messages based on data source
+      if (result.opportunities.length > 0) {
+        if (usingMock) {
+          toast.info(`Showing ${result.opportunities.length} local Tempe opportunities`, {
+            description: 'Live API data temporarily unavailable'
+          });
+        } else {
+          toast.success(`Found ${result.opportunities.length} live opportunities`, {
+            description: `${result.totalCount} total opportunities available`
+          });
+        }
+      } else {
+        toast.info('No opportunities found', {
+          description: 'Try adjusting your search filters'
+        });
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch opportunities';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load opportunities';
       setError(errorMessage);
-      toast.error(errorMessage);
+      setIsUsingMockData(true);
+      console.error('API Error:', err);
+      
+      toast.error('Unable to load live data', {
+        description: 'Check console for detailed error information'
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const loadMore = async () => {
-    if (nextPage && !loading) {
-      const nextPageNum = new URL(nextPage).searchParams.get('page');
-      if (nextPageNum) {
-        await fetchOpportunities(
-          { ...currentFilters, page: parseInt(nextPageNum) },
-          true
-        );
-      }
+    if (hasMore && !loading) {
+      await fetchOpportunities(currentFilters, true);
     }
   };
 
@@ -63,7 +91,9 @@ export function useVolunteerConnector(initialFilters: SearchFilters = {}) {
     loading,
     error,
     totalCount,
-    hasMore: !!nextPage,
+    currentPage,
+    hasMore,
+    isUsingMockData,
     searchOpportunities,
     loadMore,
     refresh: () => fetchOpportunities(currentFilters),
