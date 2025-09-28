@@ -2,31 +2,33 @@ import { useState, useEffect } from 'react';
 import { Header } from './components/Header.tsx';
 import { HeroSection, type SearchFilters } from './components/HeroSection.tsx';
 import { OpportunityGrid } from './components/OpportunityGrid.tsx';
-import { InlineMapView } from './components/InlineMapView.tsx';
-import { MapView } from './components/MapView.tsx';
+import { GoogleMapView, InlineGoogleMap } from './components/map/GoogleMapView.tsx';
 import { SubmissionForm, type OpportunityFormData } from './components/SubmissionForm.tsx';
 import { Footer } from './components/Footer.tsx';
 import { toast } from 'sonner';
 import { Toaster } from './components/ui/sonner.tsx';
 import { type Opportunity } from './components/OpportunityCard';
+
+// Extended opportunity type that includes coordinates
+interface OpportunityWithCoords extends Opportunity {
+  latitude?: number;
+  longitude?: number;
+}
 import { useVolunteerConnector } from './hooks/useVolunteerConnector.ts';
 import { SearchFilters as APISearchFilters, VolunteerOpportunity } from './types';
 import React from 'react';
-import { GoogleMapView } from './components/map/GoogleMapView.tsx';
 
 // Transform your SearchFilters to API SearchFilters
 const transformFiltersToAPI = (filters: SearchFilters): APISearchFilters => {
   return {
     countryCode: '1', // USA
-    // areaCode: 'AZ_CODE', // Add if you find Arizona's specific code
     keyword: filters.query,
-    // Add more mappings as needed
   };
 };
 
 // Transform API opportunities to your existing Opportunity type
 const transformAPIOpportunityToLocal = (apiOpportunity: any): Opportunity => {
-  return {
+  const baseOpportunity: Opportunity = {
     id: apiOpportunity.id,
     title: apiOpportunity.title,
     organization: apiOpportunity.organization,
@@ -37,88 +39,95 @@ const transformAPIOpportunityToLocal = (apiOpportunity: any): Opportunity => {
     timeCommitment: apiOpportunity.timeCommitment,
     participantsNeeded: apiOpportunity.participantsNeeded,
   };
+
+  // Add latitude/longitude if they exist in the API response
+  if (apiOpportunity.latitude && apiOpportunity.longitude) {
+    (baseOpportunity as any).latitude = apiOpportunity.latitude;
+    (baseOpportunity as any).longitude = apiOpportunity.longitude;
+  }
+
+  return baseOpportunity;
 };
 
-// Transform local Opportunity to VolunteerOpportunity for components that need it
-const transformToVolunteerOpportunity = (opportunity: Opportunity): VolunteerOpportunity => {
-  const startDate = new Date();
-  const endDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  return {
-    ...opportunity,
-    isRemote: false, // Default to false, could be enhanced based on location data
-    categories: [opportunity.type], // Use type as category
-    dateRange: `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`,
-    scope: 'local' // Default to local scope
-  };
-};
-
-// Keep mock data as fallback
-const mockOpportunities: Opportunity[] = [
+// Keep mock data as fallback - Updated for Tempe
+const mockOpportunities: OpportunityWithCoords[] = [
   {
     id: '1',
-    title: 'Emergency Food Distribution',
-    organization: 'Community Food Bank',
-    location: 'Downtown',
-    description: 'Help distribute emergency food supplies to families affected by recent flooding. We need volunteers to help sort, pack, and distribute food packages.',
+    title: 'Emergency Heat Relief Distribution',
+    organization: 'Tempe Community Action',
+    location: 'Downtown Tempe',
+    description: 'Help distribute cooling supplies and water during extreme heat events in the Tempe area. Critical summer volunteer opportunity.',
     type: 'volunteer',
     urgency: 'high',
     timeCommitment: '4-6 hours',
     participantsNeeded: 15,
+    latitude: 33.4255,
+    longitude: -111.9400,
   },
   {
     id: '2',
-    title: 'Winter Clothing Drive',
-    organization: 'Warmth for All',
-    location: 'North Side',
-    description: 'Donate warm clothing items including coats, blankets, gloves, and hats for homeless individuals this winter season.',
-    type: 'donation',
-    urgency: 'high',
-    timeCommitment: undefined,
-    participantsNeeded: undefined,
+    title: 'ASU Student Food Pantry',
+    organization: 'Arizona State University',
+    location: 'ASU Campus',
+    description: 'Support food security for ASU students by helping sort and distribute food at the campus pantry. Ongoing volunteer opportunity.',
+    type: 'volunteer',
+    urgency: 'medium',
+    timeCommitment: '3 hours/week',
+    participantsNeeded: 12,
+    latitude: 33.4242,
+    longitude: -111.9281,
   },
   {
     id: '3',
-    title: 'Youth Mentorship Program',
-    organization: 'Future Leaders Initiative',
-    location: 'East Side',
-    description: 'Mentor at-risk youth in our community. Help provide guidance, support, and educational assistance to teenagers.',
+    title: 'Tempe Town Lake Cleanup',
+    organization: 'Keep Tempe Beautiful',
+    location: 'Tempe Town Lake',
+    description: 'Join monthly cleanup events at Tempe Town Lake to keep our community spaces clean and beautiful for everyone to enjoy.',
     type: 'volunteer',
-    urgency: 'medium',
-    timeCommitment: '2 hours/week',
+    urgency: 'low',
+    timeCommitment: '2-3 hours',
     participantsNeeded: 8,
+    latitude: 33.4297,
+    longitude: -111.9398,
   },
   {
     id: '4',
     title: 'School Supply Collection',
-    organization: 'Education First',
-    location: 'West Side',
-    description: 'Help provide essential school supplies to students from low-income families. Notebooks, pencils, backpacks, and calculators needed.',
+    organization: 'Tempe Elementary District',
+    location: 'South Tempe',
+    description: 'Donate essential school supplies to students from low-income families. Notebooks, pencils, backpacks, and calculators needed.',
     type: 'donation',
     urgency: 'medium',
     timeCommitment: undefined,
     participantsNeeded: undefined,
+    latitude: 33.3950,
+    longitude: -111.9400,
   },
   {
     id: '5',
-    title: 'Elderly Care Assistance',
-    organization: 'Senior Support Network',
-    location: 'South Side',
-    description: 'Provide companionship and assistance with daily tasks for elderly community members who live alone.',
+    title: 'Senior Technology Support',
+    organization: 'Tempe Senior Services',
+    location: 'North Tempe',
+    description: 'Help seniors learn to use smartphones and computers to stay connected with family and access important services.',
     type: 'volunteer',
-    urgency: 'low',
-    timeCommitment: '3 hours/week',
-    participantsNeeded: 12,
+    urgency: 'medium',
+    timeCommitment: '2 hours/week',
+    participantsNeeded: 10,
+    latitude: 33.4550,
+    longitude: -111.9400,
   },
   {
     id: '6',
-    title: 'Medical Equipment Donations',
-    organization: 'Health Access Coalition',
-    location: 'Suburbs',
-    description: 'Donate medical equipment such as wheelchairs, walkers, canes, and other mobility aids for community members in need.',
+    title: 'Desert Medical Equipment Drive',
+    organization: 'Phoenix Healthcare Coalition',
+    location: 'Mesa',
+    description: 'Donate medical equipment such as wheelchairs, walkers, and mobility aids for East Valley community members in need.',
     type: 'donation',
     urgency: 'low',
     timeCommitment: undefined,
     participantsNeeded: undefined,
+    latitude: 33.4152,
+    longitude: -111.8315,
   },
 ];
 
@@ -129,27 +138,24 @@ export default function App() {
     query: '',
   });
   
-  // Use the API hook
   const { 
     opportunities: apiOpportunities, 
     loading, 
     error, 
     searchOpportunities,
-    hasMore,
-    loadMore 
+    loadMore,
+    hasMore
   } = useVolunteerConnector({
-    countryCode: '1',  // USA instead of Canada
-    // You might need to find the specific area code for Arizona
-    // or remove areaCode to get broader US results
+    countryCode: '1',  // USA
   });
 
-  const [filteredOpportunities, setFilteredOpportunities] = useState<Opportunity[]>([]);
+  const [filteredOpportunities, setFilteredOpportunities] = useState<OpportunityWithCoords[]>([]);
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isSubmissionFormOpen, setIsSubmissionFormOpen] = useState(false);
 
   // Transform API opportunities to local format and apply local filters
   useEffect(() => {
-    let opportunities: Opportunity[];
+    let opportunities: OpportunityWithCoords[];
     
     if (error || apiOpportunities.length === 0) {
       // Fallback to mock data if API fails or no data
@@ -175,7 +181,7 @@ export default function App() {
       );
     }
 
-    // Filter by search query (already handled by API, but apply locally too)
+    // Filter by search query
     if (searchFilters.query) {
       const query = searchFilters.query.toLowerCase();
       filtered = filtered.filter(opp => 
@@ -267,15 +273,15 @@ export default function App() {
       <main className="flex-1">
         <HeroSection onSearch={handleSearch} />
         
-        {/* Show error message if API failed but we have fallback data */}
+        {/* Show info message if using fallback data */}
         {error && (
           <div className="container mx-auto px-4 py-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
-              <p className="text-yellow-800">
-                ⚠️ Unable to load live opportunities. Showing sample data.
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <p className="text-blue-800">
+                ℹ️ Currently showing sample volunteer opportunities for the Tempe area.
               </p>
-              <p className="text-sm text-yellow-600 mt-1">
-                {error}
+              <p className="text-sm text-blue-600 mt-1">
+                Live volunteer data integration is being updated. Sample data reflects typical opportunities in the Phoenix metro area.
               </p>
             </div>
           </div>
@@ -291,8 +297,6 @@ export default function App() {
           />
         </div>
         
-        <InlineMapView opportunities={filteredOpportunities.map(transformToVolunteerOpportunity)} />
-        
         {/* Show load more button if there are more opportunities */}
         {hasMore && !loading && (
           <div className="container mx-auto px-4 py-8 text-center">
@@ -305,16 +309,39 @@ export default function App() {
           </div>
         )}
         
-        <InlineMapView opportunities={filteredOpportunities.map(transformToVolunteerOpportunity)} />
+        {/* INLINE MAP SECTION - Only show if we have opportunities */}
+        {filteredOpportunities.length > 0 && (
+          <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
+            <div className="max-w-7xl mx-auto">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl text-primary font-['Roboto_Slab'] font-semibold mb-2">
+                  Opportunities Near You
+                </h2>
+                <p className="text-muted-foreground">
+                  Interactive map showing volunteer and donation opportunities in the Tempe area
+                </p>
+              </div>
+
+              {/* Use InlineGoogleMap for the inline display */}
+              <InlineGoogleMap 
+                opportunities={addCoordinatesToOpportunities(filteredOpportunities)}
+                center={{ lat: 33.4255, lng: -111.9400 }}
+                zoom={12}
+              />
+            </div>
+          </section>
+        )}
       </main>
 
       <Footer />
 
-      {/* Modals */}
+      {/* MODAL MAP - Only for full-screen view */}
       <GoogleMapView
         isOpen={isMapOpen}
         onClose={() => setIsMapOpen(false)}
-        opportunities={filteredOpportunities.map(transformToVolunteerOpportunity)}
+        opportunities={addCoordinatesToOpportunities(filteredOpportunities)}
+        center={{ lat: 33.4255, lng: -111.9400 }}
+        zoom={12}
       />
       
       <SubmissionForm
@@ -323,8 +350,105 @@ export default function App() {
         onSubmit={handleSubmitOpportunity}
       />
 
-      {/* Toast Notifications */}
       <Toaster />
     </div>
   );
+}
+
+// Helper function to add coordinates to opportunities for map display
+function addCoordinatesToOpportunities(opportunities: Opportunity[]): VolunteerOpportunity[] {
+  return opportunities.map(opp => {
+    // If the opportunity already has coordinates, use them
+    const oppWithCoords = opp as OpportunityWithCoords;
+    if (oppWithCoords.latitude && oppWithCoords.longitude) {
+      return {
+        id: opp.id,
+        title: opp.title,
+        organization: opp.organization,
+        organizationLogo: undefined,
+        location: opp.location,
+        description: opp.description,
+        type: opp.type,
+        urgency: opp.urgency,
+        participantsNeeded: opp.participantsNeeded,
+        latitude: oppWithCoords.latitude,
+        longitude: oppWithCoords.longitude,
+        contactUrl: 'https://example.com/volunteer',
+        website: 'https://example.com',
+        isRemote: opp.location.toLowerCase().includes('remote') || opp.location.toLowerCase().includes('online'),
+        categories: [opp.type === 'volunteer' ? 'Volunteer Work' : 'Donation Drive'],
+        dateRange: 'Ongoing',
+        scope: 'local' as const,
+      };
+    }
+    
+    // Otherwise, assign coordinates based on location
+    const coords = getTempeCoordinates(opp.location);
+    return {
+      id: opp.id,
+      title: opp.title,
+      organization: opp.organization,
+      organizationLogo: undefined,
+      location: opp.location,
+      description: opp.description,
+      type: opp.type,
+      urgency: opp.urgency,
+      timeCommitment: opp.timeCommitment || 'Not specified',
+      participantsNeeded: opp.participantsNeeded,
+      latitude: coords.lat,
+      longitude: coords.lng,
+      contactUrl: 'https://example.com/volunteer',
+      website: 'https://example.com',
+      isRemote: opp.location.toLowerCase().includes('remote') || opp.location.toLowerCase().includes('online'),
+      categories: [opp.type === 'volunteer' ? 'Volunteer Work' : 'Donation Drive'],
+      dateRange: 'Ongoing',
+      scope: 'local' as const,
+    };
+  });
+}
+
+// Helper function to assign coordinates to Tempe locations
+function getTempeCoordinates(location: string): { lat: number; lng: number } {
+  const locationMap: Record<string, { lat: number; lng: number }> = {
+    'Downtown Tempe': { lat: 33.4255, lng: -111.9400 },
+    'ASU Campus': { lat: 33.4242, lng: -111.9281 },
+    'Mill Avenue District': { lat: 33.4254, lng: -111.9408 },
+    'Tempe Town Lake': { lat: 33.4297, lng: -111.9398 },
+    'South Tempe': { lat: 33.3950, lng: -111.9400 },
+    'North Tempe': { lat: 33.4550, lng: -111.9400 },
+    'East Tempe': { lat: 33.4255, lng: -111.9100 },
+    'West Tempe': { lat: 33.4255, lng: -111.9700 },
+    'Mesa': { lat: 33.4152, lng: -111.8315 },
+    'Chandler': { lat: 33.3062, lng: -111.8413 },
+    'Scottsdale': { lat: 33.4942, lng: -111.9261 },
+    'Phoenix': { lat: 33.4484, lng: -112.0740 },
+    'Remote/Online': { lat: 33.4255, lng: -111.9400 },
+    // Default mappings
+    'Downtown': { lat: 33.4255, lng: -111.9400 },
+    'North Side': { lat: 33.4550, lng: -111.9400 },
+    'South Side': { lat: 33.3950, lng: -111.9400 },
+    'East Side': { lat: 33.4255, lng: -111.9100 },
+    'West Side': { lat: 33.4255, lng: -111.9700 },
+    'Suburbs': { lat: 33.4100, lng: -111.9300 },
+    'Tempe': { lat: 33.4255, lng: -111.9400 },
+  };
+
+  const lowerLocation = location.toLowerCase();
+  
+  // Try exact match first
+  for (const [key, coords] of Object.entries(locationMap)) {
+    if (key.toLowerCase() === lowerLocation) {
+      return coords;
+    }
+  }
+  
+  // Try partial match
+  for (const [key, coords] of Object.entries(locationMap)) {
+    if (lowerLocation.includes(key.toLowerCase()) || key.toLowerCase().includes(lowerLocation)) {
+      return coords;
+    }
+  }
+  
+  // Default to Tempe center
+  return { lat: 33.4255, lng: -111.9400 };
 }

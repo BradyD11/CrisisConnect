@@ -295,3 +295,132 @@ export function GoogleMapView({
     </div>
   );
 }
+
+interface InlineGoogleMapProps {
+  opportunities: VolunteerOpportunity[];
+  center?: { lat: number; lng: number };
+  zoom?: number;
+}
+
+const InlineMapComponent: React.FC<{
+  center: google.maps.LatLngLiteral;
+  zoom: number;
+  opportunities: VolunteerOpportunity[];
+}> = ({ center, zoom, opportunities }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [map, setMap] = useState<google.maps.Map>();
+
+  useEffect(() => {
+    if (ref.current && !map) {
+      const newMap = new window.google.maps.Map(ref.current, {
+        center,
+        zoom,
+        styles: [
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ]
+      });
+      setMap(newMap);
+    }
+  }, [ref, map, center, zoom]);
+
+  useEffect(() => {
+    if (map && opportunities.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+
+      opportunities.forEach((opportunity) => {
+        if (opportunity.latitude && opportunity.longitude) {
+          const position = {
+            lat: opportunity.latitude,
+            lng: opportunity.longitude
+          };
+
+          const marker = new window.google.maps.Marker({
+            position,
+            map,
+            title: opportunity.title,
+            icon: {
+              url: opportunity.type === 'volunteer' 
+                ? 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="#dc2626" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5" fill="white"/>
+                  </svg>
+                `)
+                : 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="#ea580c" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                    <circle cx="12" cy="9" r="2.5" fill="white"/>
+                  </svg>
+                `),
+              scaledSize: new window.google.maps.Size(24, 24),
+              anchor: new window.google.maps.Point(12, 24)
+            }
+          });
+
+          bounds.extend(position);
+        }
+      });
+
+      if (opportunities.length > 1) {
+        map.fitBounds(bounds);
+      }
+    }
+  }, [map, opportunities]);
+
+  return <div ref={ref} className="w-full h-full" />;
+};
+
+const inlineRender = (status: Status) => {
+  switch (status) {
+    case Status.LOADING:
+      return (
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading map...</p>
+          </div>
+        </div>
+      );
+    case Status.FAILURE:
+      return (
+        <div className="flex items-center justify-center h-96 bg-gray-100 rounded-lg">
+          <div className="text-center text-red-600">
+            <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p className="font-medium">Unable to load map</p>
+            <p className="text-sm">Please check your internet connection</p>
+          </div>
+        </div>
+      );
+    default:
+      return <></>;
+  }
+};
+
+export function InlineGoogleMap({ 
+  opportunities, 
+  center = { lat: 33.4255, lng: -111.9400 }, 
+  zoom = 12
+}: InlineGoogleMapProps) {
+  const filteredOpportunities = opportunities.filter(opp => 
+    opp.latitude && opp.longitude
+  );
+
+  return (
+    <div className="w-full h-96 rounded-lg overflow-hidden border shadow-lg">
+      <Wrapper
+        apiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY || ''}
+        render={inlineRender}
+      >
+        <InlineMapComponent
+          center={center}
+          zoom={zoom}
+          opportunities={filteredOpportunities}
+        />
+      </Wrapper>
+    </div>
+  );
+}
